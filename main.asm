@@ -1,3 +1,5 @@
+!to "main.prg"
+
 !macro start_at .address {
   * = $0801
   !byte $0c,$08,$00,$00,$9e
@@ -9,10 +11,8 @@
   * = .address
 }
 
-
 !SOURCE "synthins.asm"
-
-;* = $0801
+!source "sprites.asm"
 
 +start_at $0900
 
@@ -37,14 +37,13 @@
 
 
     ldx #$07
--
-    lda sprite_mcm,x
+-   lda sprite_mcm,x
     cmp #$01
     rol $d01c ;C->MCM
     dex
     bpl -
 
-;set_tick_irq:
+    ;set_tick_irq:
     ;Diable Maskeable interrupts.
     sei
     
@@ -85,18 +84,18 @@
     jmp *
 
 main_irq:
-    inc $d020
+    ;inc $d020
     
     ;Main Game Loop
     jsr read_joystick
     jsr update_player
     jsr update_ball
-    jsr update_pos
+    ;jsr update_pos
     jsr update_sprites
     jsr sprite_collide
     ldx #$04
 
-    dec $d020
+    ;dec $d020
     
     asl $d019 ;ACK
     
@@ -161,7 +160,7 @@ update_ball:
 
     lda ball_x + 1 ; msb
     cmp #1
-    beq + ; don't check left bounds if MSB == 1
+    beq + ; don't check left bounds if MSB == 2
     
     lda #24
     cmp ball_x ; 24 >= ball_x
@@ -195,52 +194,12 @@ update_ball:
 
 sprite_collide:
     lda $d01e
-	lsr
-	bcc +
-	lsr
-	bcc +
-	lda #$ff
+    cmp #$03
+    bne +
+    lda #$ff
     sta ball_dy
 +   rts
 
-update_pos:
-     jsr btobin
-     ldx #8
--    lda $41,x
-     sta $0400,x
-     dex
-     bne -
-     lda #24
-     sta $0428
-     lda ball_x + 1
-     jsr btoa
-     sty $0402
-     stx $0403
-     sta $0404
-;    lda #25
-;    sta $0406
-;    lda dy
-;    jsr btoa
-;    sty $0408
-;    stx $0409
-;    sta $040a
-;
-;    lda #24
-;    sta $0428
-;    lda player_x+1
-;    jsr btoa
-;    sty $042a
-;    stx $042b
-;    sta $042c
-;    lda #25
-;    sta $042e
-;    lda player_y
-;    jsr btoa
-;    sty $0430
-;    stx $0431
-;    sta $0432
-    rts
-    
 btobin:
       lda $d01e
       ldx #8
@@ -288,10 +247,11 @@ update_sprites:
       
       lda sprite_c,x
       sta $d027,x
+
       lda sprite_p,x
       sta $07f8,x
 
-      dey
++     dey
       dey
       dex
       bpl loop
@@ -301,8 +261,7 @@ update_sprites:
 cls:
       lda #$20
       ldx #$ff
-      -
-      sta $0400,x
+-     sta $0400,x
       sta $0500,x
       sta $0600,x
       sta $0700,x
@@ -313,8 +272,7 @@ cls:
 ccram:
       lda #$01
       ldx #$ff
-      -
-      sta $d800,x
+-     sta $d800,x
       sta $d900,x
       sta $da00,x
       sta $db00,x
@@ -323,7 +281,7 @@ ccram:
       rts
 
 ;Ball Data
-ball_x !by $a0, $00
+ball_x !wo $a0, $00
 ball_y !by $74
 ball_dx !by $01
 ball_dy !by $01
@@ -340,81 +298,5 @@ sprite_m: !by $00, $00, $00, $00, $00, $00, $00, $00
 sprite_y: !by $c8, $74, $ff, $ff, $ff, $ff, $ff, $ff
 sprite_c: !by $01, $08, $00, $00, $00, $00, $00, $00
 sprite_p: !by $c8, $c0, $00, $00, $00, $00, $00, $00
+sprite_mp: !by $00, $c7, $00, $00, $00, $00, $00, $00
 
-x !wo 0
-y !wo 0
-fdx !by 0
-fdy !by 0
-w  !by 0
-h  !by 0
-c  !by 0
-f1 !by 0
-f2 !by 0
-f3 !by 0
-f4 !by 0
-
-
-*=$3000
-
-pumpkin_00
-
-!byte $00,$00,$00,$00,$0c,$00,$00,$18,$00,$00,$10,$00,$00,$d6,$00,$01
-!byte $ff,$00,$03,$7d,$80,$07,$39,$c0,$06,$38,$c0,$0f,$ef,$e0,$0f,$c7
-!byte $e0,$0f,$ff,$e0,$06,$7c,$c0,$07,$39,$c0,$03,$83,$80,$01,$ff,$00
-!byte $00,$fe,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$08
-
-pumpkin_01
-
-!byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$7c,$00,$01,$fe,$e0,$03
-!byte $ef,$c0,$03,$c7,$00,$07,$ef,$c0,$04,$ff,$c0,$0e,$c4,$40,$0e,$ec
-!byte $c0,$04,$fe,$c0,$06,$7f,$c0,$03,$07,$80,$01,$a7,$80,$00,$ff,$00
-!byte $00,$7c,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$08
-
-pumpkin_02
-
-!byte $00,$00,$00,$00,$00,$00,$00,$38,$00,$00,$fe,$00,$01,$ff,$00,$03
-!byte $bb,$80,$07,$38,$c0,$06,$79,$c0,$06,$ef,$80,$06,$e7,$f0,$06,$ef
-!byte $98,$06,$79,$c8,$07,$38,$c0,$03,$bb,$80,$01,$ff,$00,$00,$fe,$00
-!byte $00,$38,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$08
-
-pumpkin_03
-
-!byte $00,$00,$00,$00,$00,$00,$00,$18,$00,$00,$7e,$00,$00,$db,$80,$01
-!byte $83,$c0,$03,$3f,$c0,$06,$7f,$e0,$07,$76,$e0,$06,$64,$60,$06,$76
-!byte $e0,$07,$ff,$e0,$03,$e7,$c0,$03,$c7,$80,$01,$f6,$c0,$00,$7e,$c0
-!byte $00,$00,$40,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$08
-
-pumpkin_04
-
-!byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$7f,$00,$00,$ff,$80,$01
-!byte $c1,$c0,$03,$9c,$e0,$03,$3e,$60,$07,$ff,$f0,$07,$e3,$f0,$07,$f7
-!byte $f0,$03,$1c,$60,$03,$9c,$e0,$01,$be,$c0,$00,$ff,$80,$00,$6b,$00
-!byte $00,$08,$00,$00,$18,$00,$00,$30,$00,$00,$00,$00,$00,$00,$00,$08
-
-pumpkin_05
-
-!byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$3e,$00,$00,$ff,$00,$01
-!byte $e5,$80,$01,$e0,$c0,$03,$fe,$60,$03,$7f,$20,$03,$37,$70,$02,$23
-!byte $70,$03,$ff,$20,$03,$f7,$e0,$00,$e3,$c0,$03,$f7,$c0,$07,$7f,$80
-!byte $00,$3e,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$08
-
-pumpkin_06
-
-!byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$1c,$00,$00,$7f,$00,$00
-!byte $ff,$80,$01,$dd,$c0,$03,$1c,$e0,$13,$9e,$60,$19,$f7,$60,$0f,$e7
-!byte $60,$01,$f7,$60,$03,$9e,$60,$03,$1c,$e0,$01,$dd,$c0,$00,$ff,$80
-!byte $00,$7f,$00,$00,$1c,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$08
-
-pumpkin_07
-
-!byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$02,$00,$00,$03,$7e,$00,$03
-!byte $6f,$80,$01,$e3,$c0,$03,$e7,$c0,$07,$ff,$e0,$07,$6e,$60,$06,$26
-!byte $60,$07,$6e,$e0,$07,$fe,$60,$03,$fc,$c0,$03,$c1,$80,$01,$db,$00
-!byte $00,$7e,$00,$00,$18,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$08
-
-paddle
-
-!byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-!byte $00,$00,$00,$00,$00,$00,$00,$00,$3f,$ff,$fc,$7f,$ff,$fe,$ff,$ff
-!byte $ff,$7f,$ff,$fe,$3f,$ff,$fc,$00,$00,$00,$00,$00,$00,$00,$00,$00
-!byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01
