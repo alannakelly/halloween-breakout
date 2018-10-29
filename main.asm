@@ -90,7 +90,7 @@ main_irq:
     jsr read_joystick
     jsr update_player
     jsr update_ball
-    ;jsr update_pos
+    jsr update_score
     jsr update_sprites
     jsr sprite_collide
     ldx #$04
@@ -136,6 +136,7 @@ dx !byte 0
 dy !byte 0
 
 update_player:
+    asl dx
     clc
     +add_s8_to_u16 player_x, dx
 
@@ -189,7 +190,18 @@ update_ball:
     bcc +
     lda #$ff
     sta ball_dy
-    
+
++   dec ball_anim_timer
+    bne +
+    lda #$04
+    sta ball_anim_timer
+    inc sprite_p + 1
+    lda #$c8
+    cmp sprite_p +1
+    bne +
+    lda #$c0
+    sta sprite_p + 1
+        
 +   rts
 
 sprite_collide:
@@ -198,7 +210,16 @@ sprite_collide:
     bne +
     lda #$ff
     sta ball_dy
+    inc bounce_count
 +   rts
+
+update_score:
+    lda bounce_count
+    jsr btoa
+    sty $400
+    stx $401
+    sta $402
+    rts
 
 btobin:
       lda $d01e
@@ -260,7 +281,7 @@ update_sprites:
 
 cls:
       lda #$20
-      ldx #$ff
+      ldx #$00
 -     sta $0400,x
       sta $0500,x
       sta $0600,x
@@ -271,7 +292,7 @@ cls:
 
 ccram:
       lda #$01
-      ldx #$ff
+      ldx #$00
 -     sta $d800,x
       sta $d900,x
       sta $da00,x
@@ -285,6 +306,8 @@ ball_x !wo $a0, $00
 ball_y !by $74
 ball_dx !by $01
 ball_dy !by $01
+ball_anim_timer !by $00
+bounce_count !by $00
 
 ; Player Data
 player_x !by $a0, $00
