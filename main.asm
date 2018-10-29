@@ -13,6 +13,7 @@
 
 !SOURCE "synthins.asm"
 !source "sprites.asm"
+!source "tiles.asm"
 
 +start_at $0900
 
@@ -22,8 +23,14 @@
     sta $d020
     lda #$00
     sta $d021
+	lda #$08
+	sta $d022
+	lda #$09
+	sta $d023
+		
     jsr cls
     jsr ccram
+	jsr top_half
 
     ;Enable all sprites
     lda #$03
@@ -35,13 +42,24 @@
     sta $D025
     sty $D026
 
-
     ldx #$07
 -   lda sprite_mcm,x
     cmp #$01
     rol $d01c ;C->MCM
     dex
     bpl -
+	
+	;Setup tileset
+	lda $d018
+	and #%11110001
+	ora #%00001000
+	sta $d018
+	
+	;Setup tileset
+	lda $d016
+	and #%11110111
+	ora #%00001000
+	sta $d016	
 
     ;set_tick_irq:
     ;Diable Maskeable interrupts.
@@ -278,7 +296,25 @@ update_sprites:
       bpl loop
       rts
 
-
+top_half:
+	  lda #<map_data
+	  ldy #>map_data
+	  sta $80
+	  sty $81
+	  
+-     lda ($80),y ;Tile index
+	  tax
+	  lda tileset_data,x ;Char
+	  sta $0400,y
+	  lda tileset_data+1,x
+	  sta $0401,y
+	  
+	  iny
+	  iny
+	  bne -
+	  
+	  rts
+	  
 cls:
       lda #$20
       ldx #$00

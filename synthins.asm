@@ -197,7 +197,7 @@
     sta u16+1
 }
   
-*=$8000
+*=$C000
 IDENTITY_TABLE
 !align 255, 0
 !for i, 0, 255 {!by i}
