@@ -196,9 +196,14 @@
     adc u16+1
     sta u16+1
 }
+
+!macro poke m, v {
+    lda #v
+    sta m
+} 
   
-*=$C000
+*=$e000
 IDENTITY_TABLE
-!align 255, 0
+!align 256, 0
 !for i, 0, 255 {!by i}
 
